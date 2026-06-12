@@ -2261,9 +2261,10 @@ namespace IGTAPMapEditor
                     {
                         // the empty gap between "Debug" and "Accept & Close" in the
                         // left column — fractional anchors so panel units don't matter
-                        rt.anchorMin = rt.anchorMax = new Vector2(0.17f, i == 0 ? 0.33f : 0.24f);
+                        // (0.33 sat on top of the Debug row — keep both below it)
+                        rt.anchorMin = rt.anchorMax = new Vector2(0.2f, i == 0 ? 0.25f : 0.17f);
                         rt.pivot = new Vector2(0.5f, 0.5f);
-                        rt.localScale = Vector3.one * 0.62f;
+                        rt.localScale = Vector3.one * 0.55f;
                         rt.anchoredPosition = Vector2.zero;
                     }
                     // restack: icon LEFT of the text instead of below it

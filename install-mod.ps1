@@ -12,20 +12,19 @@
 #   4. Electron editor app            -> <game>\MapEditor\electron\   (-SkipElectron to omit)
 #                                       (assembled from the official Electron runtime,
 #                                       downloaded from github.com/electron if needed)
-#   5. Sprite library                 -> %AppData%\IGTAPEditor\sprites (-SkipSprites to omit)
 #
-# If the installer is run on its own (e.g. straight from a downloaded ZIP, where
-# Windows extracts only the exe to a temp folder), it downloads the payload
-# from GitHub automatically.
+# The installer only ever touches its own folder and the game folder. If it is
+# run on its own (e.g. straight from a downloaded ZIP, where Windows extracts
+# only the exe to a temp folder), it downloads the mod files from GitHub into
+# its own folder first.
 #
 # Usage:  powershell -ExecutionPolicy Bypass -File install-mod.ps1
-#         [-GameDir "D:\Steam\...\IGTAP ... Demo"] [-NoBuild] [-SkipElectron] [-SkipSprites]
+#         [-GameDir "D:\Steam\...\IGTAP ... Demo"] [-NoBuild] [-SkipElectron]
 # ===========================================================================
 param(
     [string]$GameDir = "C:\Program Files (x86)\Steam\steamapps\common\IGTAP an Incremental Game That's Also a Platformer Demo",
     [switch]$NoBuild,
-    [switch]$SkipElectron,
-    [switch]$SkipSprites
+    [switch]$SkipElectron
 )
 
 $ErrorActionPreference = 'Stop'
@@ -51,21 +50,24 @@ if (-not (Test-Path (Join-Path $src 'MapEditorPlugin'))) {
 }
 # Still no payload next to the installer? Happens when the exe is run on its own,
 # e.g. launched straight from inside a downloaded ZIP (Windows extracts only the
-# exe to a temp folder). Fetch the payload from GitHub instead of failing.
+# exe to a temp folder). Fetch the mod files from GitHub into the installer's own
+# folder instead of failing.
 if (-not (Test-Path (Join-Path $src 'MapEditorPlugin'))) {
     Write-Host '==> Mod files not found next to the installer - downloading them from GitHub' -ForegroundColor Cyan
-    $stage = Join-Path $env:TEMP 'IGTAPMapEditorMod'
-    if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
-    New-Item -ItemType Directory -Force $stage | Out-Null
-    $zip = Join-Path $stage 'repo.zip'
-    Download-File $RepoZipUrl $zip
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [IO.Compression.ZipFile]::ExtractToDirectory($zip, $stage)
-    Remove-Item $zip -Force
-    $inner = Get-ChildItem $stage -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'MapEditorPlugin') } | Select-Object -First 1
-    if (-not $inner) { throw 'Downloaded payload is missing MapEditorPlugin - report this on GitHub.' }
-    $src = $inner.FullName
-    Write-Host "    payload -> $src" -ForegroundColor Green
+    $stage = Join-Path $src 'IGMAP-files'
+    $existing = Get-ChildItem $stage -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path (Join-Path $_.FullName 'MapEditorPlugin') } | Select-Object -First 1
+    if (-not $existing) {
+        New-Item -ItemType Directory -Force $stage | Out-Null
+        $zip = Join-Path $stage 'repo.zip'
+        Download-File $RepoZipUrl $zip
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [IO.Compression.ZipFile]::ExtractToDirectory($zip, $stage)
+        Remove-Item $zip -Force
+        $existing = Get-ChildItem $stage -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'MapEditorPlugin') } | Select-Object -First 1
+    }
+    if (-not $existing) { throw 'Downloaded mod files are missing MapEditorPlugin - report this on GitHub.' }
+    $src = $existing.FullName
+    Write-Host "    mod files -> $src" -ForegroundColor Green
 }
 
 # Pause before closing when double-clicked (no arguments)
@@ -182,7 +184,7 @@ if (-not $SkipElectron) {
     } elseif (-not (Test-Path $electronExe)) {
         # assemble it: official Electron runtime + the editor app from igtap-editor
         Step 'Downloading Electron runtime (~110 MB, one time) and assembling the in-game editor'
-        $ezip = Join-Path $env:TEMP 'igtap-electron-runtime.zip'
+        $ezip = Join-Path $src 'electron-runtime.zip'
         Download-File $ElectronZipUrl $ezip
         New-Item -ItemType Directory -Force $electronDst | Out-Null
         Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -212,28 +214,7 @@ if (-not $SkipElectron) {
     }
 }
 
-# == 5. sprite library ========================================================
-if (-not $SkipSprites) {
-    $spriteDst = Join-Path $env:APPDATA 'IGTAPEditor\sprites'
-    $existing = 0
-    if (Test-Path $spriteDst) { $existing = (Get-ChildItem $spriteDst -Filter *.png -ErrorAction SilentlyContinue).Count }
-    if ($existing -lt 100) {
-        # payload folder shipped next to the script (full AssetRipper dump)
-        $spriteSrc = Join-Path $src 'sprites'
-        if (Test-Path $spriteSrc) {
-            Step 'Installing sprite library'
-            New-Item -ItemType Directory -Force $spriteDst | Out-Null
-            robocopy $spriteSrc $spriteDst /E /NFL /NDL /NJH /NJS /NP | Out-Null
-            $global:LASTEXITCODE = 0
-            Ok "sprites -> $spriteDst"
-        } else {
-            Write-Warning "Sprite library payload not found ($spriteSrc) and AppData has only $existing sprites - the editor gallery/packs will be sparse until the game exports or the dump is copied."
-        }
-    } else {
-        Step 'Sprite library'
-        Ok "$existing sprites already present in $spriteDst"
-    }
-}
+# (sprites are exported by the plugin itself on first run - nothing to install)
 
 Write-Host ''
 Write-Host '====================================================' -ForegroundColor Yellow
