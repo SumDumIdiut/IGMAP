@@ -1,0 +1,75 @@
+[
+  {
+    "family": "Blue1",
+    "label": "Blue1",
+    "corner": "blue_ground_tileset_1",
+    "edge": "blue_ground_tileset_2",
+    "fill": "blue_ground_tileset_10"
+  },
+  {
+    "family": "Blue2",
+    "label": "Blue2",
+    "corner": "blue_ground_tileset_56",
+    "edge": "blue_ground_tileset_57",
+    "fill": "blue_ground_tileset_64"
+  },
+  {
+    "family": "Black2",
+    "label": "Black2",
+    "corner": "dark_ground_tileset_56",
+    "edge": "dark_ground_tileset_57",
+    "fill": "dark_ground_tileset_64"
+  },
+  {
+    "family": "Grey2",
+    "label": "Grey2",
+    "corner": "ground1_tileset_1",
+    "edge": "ground1_tileset_2",
+    "fill": "FLOOR V2 Tileset_4"
+  },
+  {
+    "family": "Green1",
+    "label": "Green1",
+    "corner": "Mossy - TileSet_14",
+    "edge": "Mossy - TileSet_15",
+    "fill": "Mossy - TileSet_8",
+    "rot": 180,
+    "edgeRot": 180,
+    "cornerRot": 270
+  },
+  {
+    "family": "Green2",
+    "label": "Green2",
+    "corner": "Mossy - TileSet_0",
+    "edge": "Mossy - TileSet_1",
+    "fill": "Mossy - TileSet_8"
+  },
+  {
+    "family": "Orange1",
+    "label": "Orange1",
+    "corner": "orange_ground_tileset_1",
+    "edge": "orange_ground_tileset_2",
+    "fill": "orange_ground_tileset_10"
+  },
+  {
+    "family": "Black1",
+    "label": "Black1",
+    "corner": "dark_ground_tileset_1",
+    "edge": "dark_ground_tileset_2",
+    "fill": "dark_ground_tileset_64"
+  },
+  {
+    "family": "Grey1",
+    "label": "Grey1",
+    "corner": "ground1_tileset_56",
+    "edge": "ground1_tileset_57",
+    "fill": "FLOOR V2 Tileset_4"
+  },
+  {
+    "family": "Orange2",
+    "label": "Orange2",
+    "corner": "orange_ground_tileset_56",
+    "edge": "orange_ground_tileset_57",
+    "fill": "orange_ground_tileset_10"
+  }
+]

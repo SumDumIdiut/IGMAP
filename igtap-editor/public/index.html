@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>IGTAP Map Editor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="topbar">
+    <span class="app-title">IGTAP Map Editor</span>
+    <input id="map-name" type="text" value="custommap" title="Map filename (no .json)" placeholder="map name" style="width:110px;font-size:12px;padding:2px 5px;background:#1e2030;color:#c9d1e0;border:1px solid #374158;border-radius:3px;">
+    <select id="map-list" title="Saved maps" style="font-size:12px;padding:2px 4px;background:#1e2030;color:#c9d1e0;border:1px solid #374158;border-radius:3px;max-width:130px;">
+      <option value="">— maps —</option>
+    </select>
+    <button id="btn-load" title="Load selected map from game (Ctrl+L)">Load</button>
+    <button id="btn-new"  title="Clear all map data (Ctrl+N)">Clear</button>
+    <button id="btn-open" title="Open JSON file (Ctrl+O)">Open</button>
+    <button id="btn-save" title="Save to game (Ctrl+S)">Save</button>
+    <button id="btn-dl"   title="Download JSON (Ctrl+Shift+S)">Download</button>
+    <button id="btn-autotile" title="Auto-tile ground structures (corner/edge/fill pieces)">Tilemap</button>
+    <button id="btn-close-game" title="Close the in-game editor (F10)" style="margin-left:auto;background:#7f1d1d;border-color:#b91c1c">✕ Close</button>
+    <span id="topbar-msg"></span>
+  </div>
+
+  <div id="toolbar"></div>
+
+  <div id="canvas-container">
+    <canvas id="main-canvas"></canvas>
+    <div id="status-bar">
+      <span id="status-coords">0, 0</span>
+      <span id="status-zoom">Zoom: 1.0×</span>
+      <span id="status-tool">Ground</span>
+      <span id="status-msg"></span>
+    </div>
+  </div>
+
+  <div id="properties">
+    <div id="prop-image" class="prop-section" style="display:none">
+      <div class="prop-title">Image</div>
+      <label>Width <input type="number" id="img-w" step="0.5" min="0.1" value="1"></label>
+      <label>Height <input type="number" id="img-h" step="0.5" min="0.1" value="1"></label>
+      <label>Rotation
+        <div class="row-2">
+          <button id="img-rot-ccw" class="rot-btn">−90°</button>
+          <button id="img-rot-cw"  class="rot-btn">+90°</button>
+        </div>
+        <input type="number" id="img-rot" step="1" min="-180" max="180" value="0">
+      </label>
+      <label>Opacity <input type="range" id="img-opacity" min="0" max="1" step="0.05" value="1"><span id="img-opacity-val">1.00</span></label>
+      <label>Depth <input type="number" id="img-depth" step="1" value="0"></label>
+      <div class="prop-subtitle">Color Tint</div>
+      <label>R <input type="range" id="img-cr" min="0" max="1" step="0.05" value="1"><span id="img-cr-val">1.00</span></label>
+      <label>G <input type="range" id="img-cg" min="0" max="1" step="0.05" value="1"><span id="img-cg-val">1.00</span></label>
+      <label>B <input type="range" id="img-cb" min="0" max="1" step="0.05" value="1"><span id="img-cb-val">1.00</span></label>
+      <div class="tint-preview" id="tint-preview"></div>
+      <button id="img-delete" class="btn-danger" style="display:none">Delete</button>
+    </div>
+
+    <div id="prop-box" class="prop-section" style="display:none">
+      <div class="prop-title">Upgrade Box</div>
+      <label>Type
+        <select id="box-upgrade">
+          <optgroup label="Global">
+            <option value="0">Global (GLB)</option>
+            <option value="1">Movement (MOV)</option>
+          </optgroup>
+          <optgroup label="Course">
+            <option value="2" selected>Clones (CLO)</option>
+            <option value="3">Reward (RWD)</option>
+            <option value="4">Speed (SPD)</option>
+            <option value="5">Size (SZE)</option>
+            <option value="6">Prestige (PRE)</option>
+            <option value="7">Multiplier (MLT)</option>
+            <option value="9">GP Reward (GPR)</option>
+          </optgroup>
+        </select>
+      </label>
+      <label>Cap <input type="number" id="box-cap" min="1" max="999" value="30"></label>
+      <label>Formula
+        <input type="text" id="box-formula" value="10" placeholder="e.g. 10 * n">
+        <span class="hint" style="font-size:10px">n = purchase # (1–cap) · ^ power · n! factorial · π τ φ ω ∞ · PI TAU E PHI OMEGA SQRT2 LN2 · sin cos tan sinh cosh asin atan2 · log log2 log10 exp · sqrt cbrt hypot abs floor ceil round · factorial gamma Γ fib C P gcd lcm · lambertW W erf erfc zeta · clamp lerp smoothstep sigmoid tri mod logBase</span>
+      </label>
+      <canvas id="box-formula-graph" width="176" height="80" style="display:block;width:100%;margin-top:3px;border-radius:3px;cursor:default"></canvas>
+      <div id="box-formula-stats" style="font-size:9px;color:#64748b;text-align:center;margin-top:2px;font-family:monospace"></div>
+      <button id="box-delete" class="btn-danger" style="display:none">Delete</button>
+    </div>
+
+    <div id="prop-hitbox" class="prop-section" style="display:none">
+      <div class="prop-title">Hitbox</div>
+      <label>X <input type="number" id="hb-x" step="0.5" value="0"></label>
+      <label>Y <input type="number" id="hb-y" step="0.5" value="0"></label>
+      <label>W <input type="number" id="hb-w" step="0.5" min="0.1" value="1"></label>
+      <label>H <input type="number" id="hb-h" step="0.5" min="0.1" value="1"></label>
+      <button id="hb-delete" class="btn-danger">Delete</button>
+    </div>
+
+    <div id="prop-marker" class="prop-section" style="display:none">
+      <div class="prop-title"><span id="marker-type-label">Marker</span></div>
+      <label style="flex-direction:row;align-items:center;gap:6px">
+        Group
+        <button id="marker-group-dec" style="width:20px;height:20px;padding:0;font-size:13px;line-height:1">−</button>
+        <input type="number" id="marker-group" min="0" step="1" value="0" style="width:44px;text-align:center">
+        <button id="marker-group-inc" style="width:20px;height:20px;padding:0;font-size:13px;line-height:1">+</button>
+        <span id="group-swatch" style="display:inline-block;width:16px;height:16px;border-radius:50%;flex-shrink:0"></span>
+      </label>
+      <div class="prop-subtitle">Course Settings</div>
+      <label>Base Reward
+        <input type="number" id="marker-base-reward" min="1" step="1" value="10">
+        <span class="hint" style="font-size:10px">Watts per loop</span>
+      </label>
+      <label>Clone Mult
+        <input type="number" id="marker-clone-mult" min="0" step="0.1" value="1.0">
+        <span class="hint" style="font-size:10px">Clone bonus multiplier</span>
+      </label>
+      <button id="marker-delete" class="btn-danger" style="display:none">Delete</button>
+    </div>
+
+    <div id="prop-course" class="prop-section" style="display:none">
+      <div class="prop-title">Course Settings</div>
+      <label>Base Reward
+        <input type="number" id="course-base-reward" min="1" step="1" value="10">
+      </label>
+      <label>Clone Mult
+        <input type="number" id="course-clone-mult" min="0" step="0.1" value="1.0">
+      </label>
+    </div>
+
+    <div id="prop-objsel" class="prop-section" style="display:none">
+      <div class="prop-title" id="objsel-title">Object</div>
+      <button id="objsel-delete" class="btn-danger">Delete</button>
+    </div>
+
+    <div id="prop-multisel" class="prop-section" style="display:none">
+      <div class="prop-title">Selection</div>
+      <div id="multisel-count" style="font-size:11px;color:#9ca3af;text-align:center;padding:2px 0"></div>
+      <span class="hint" style="font-size:10px;text-align:center">Drag to move · Delete to remove</span>
+      <button id="multisel-delete" class="btn-danger">Delete All</button>
+    </div>
+
+    <div id="prop-autotile" class="prop-section" style="display:none">
+      <div class="prop-title">Auto-tile</div>
+      <div class="prop-subtitle">Tileset Pack</div>
+      <div id="at-packs" style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-bottom:6px"></div>
+      <p class="hint" style="font-size:10px;margin:0 0 4px">Pick a pack, then Apply. With tiles selected, only the selection is styled and only its packs are listed.</p>
+      <button id="at-apply" style="display:block;width:100%;margin-top:4px;padding:6px;background:#166534;border:1px solid #22c55e;border-radius:3px;color:#dcfce7;font-weight:bold;cursor:pointer">Apply Auto-tile</button>
+      <button id="at-clear" class="btn-danger" style="display:block;width:100%;margin-top:4px;padding:5px">Clear Auto-tiling</button>
+    </div>
+
+    <div id="prop-empty" class="prop-section">
+      <div class="prop-title">Properties</div>
+      <p class="hint">Select an object with the Pointer tool [Esc] to edit properties.</p>
+    </div>
+  </div>
+
+  <div id="gallery">
+    <div id="gallery-controls">
+      <input type="text" id="gallery-search" placeholder="Search sprites…">
+      <div id="gallery-tabs">
+        <button class="tab-btn active" data-cat="all">All</button>
+        <button class="tab-btn" data-cat="tiles">Tiles</button>
+        <button class="tab-btn" data-cat="backgrounds">Backgrounds</button>
+        <button class="tab-btn" data-cat="decorations">Decorations</button>
+        <button class="tab-btn" data-cat="other">Other</button>
+      </div>
+    </div>
+    <div id="gallery-grid"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

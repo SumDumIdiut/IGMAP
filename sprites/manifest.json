@@ -1,0 +1,22 @@
+﻿{
+  "spriteDir": "C:\\Users\\macro\\AppData\\Roaming\\IGTAPEditor\\sprites",
+  "layerMap": {
+    "0": {"file":"tile_ground.png","tint":[1,1,1,1],"name":"Ground"},
+    "1": {"file":"tile_alt.png","tint":[1,1,1,1],"name":"Alt Ground"},
+    "2": {"file":"tile_spike.png","tint":[1,1,1,1],"name":"Spike"},
+    "3": {"file":"tile_ground.png","tint":[0.3,0.55,1,1],"name":"Blue Swap Blk"},
+    "4": {"file":"tile_ground.png","tint":[1,0.5,0.1,1],"name":"Org Swap Blk"},
+    "5": {"file":"tile_spike.png","tint":[0.4,0.65,1,1],"name":"Blue Swap Spk"},
+    "6": {"file":"tile_spike.png","tint":[1,0.6,0.2,1],"name":"Org Swap Spk"}
+  },
+  "objectMap": {
+    "upgradebox": "obj_box.png",
+    "checkpoint": "obj_checkpoint.png",
+    "swaptrigger": "obj_box.png",
+    "gate": "obj_gate.png",
+    "end": "obj_gate.png"
+  },
+  "tileset": [
+
+  ]
+}
