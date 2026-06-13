@@ -1,12 +1,18 @@
 const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
+const os      = require('os');
 
 const app = express();
 const PORT = 3000;
 
-const SPRITE_DIR = 'C:\\Users\\macro\\AppData\\Roaming\\IGTAPEditor\\sprites';
-const SAVE_DIR   = 'C:\\Users\\macro\\AppData\\LocalLow\\Pepper tango games\\IGTAPsnfDemo\\Savedata\\customcourses';
+// Resolve against the CURRENT user's profile - never a hardcoded path.
+// %APPDATA% (Roaming) holds the sprites the plugin exports; the game writes
+// its saves to %USERPROFILE%\AppData\LocalLow\<company>\<product> (Unity's
+// persistentDataPath), which has no env var, so build it from the home dir.
+const APPDATA  = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+const SPRITE_DIR = path.join(APPDATA, 'IGTAPEditor', 'sprites');
+const SAVE_DIR   = path.join(os.homedir(), 'AppData', 'LocalLow', 'Pepper tango games', 'IGTAPsnfDemo', 'Savedata', 'customcourses');
 
 // ── Sprite manifest ───────────────────────────────────────────
 let manifest = null;
