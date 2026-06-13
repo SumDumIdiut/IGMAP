@@ -160,6 +160,11 @@ if (Test-Path $editorSrc) {
     Copy-Item (Join-Path $editorSrc 'public')       $editorDst -Recurse -Force
     if (Test-Path (Join-Path $editorSrc 'node_modules')) {
         Copy-Item (Join-Path $editorSrc 'node_modules') $editorDst -Recurse -Force
+        # drop the dev-only build tooling (can be ~250 MB) - the standalone
+        # server only needs the production dependencies
+        foreach ($dev in 'electron', 'electron-builder') {
+            Remove-Item (Join-Path $editorDst "node_modules\$dev") -Recurse -Force -ErrorAction SilentlyContinue
+        }
     }
     if (Test-Path (Join-Path $editorSrc 'package.json')) { Copy-Item (Join-Path $editorSrc 'package.json') $editorDst -Force }
     Ok "web editor -> MapEditor\webeditor\ (needs Node.js on PATH for the standalone server)"
@@ -202,14 +207,47 @@ if (-not $SkipElectron) {
     if ((Test-Path $electronExe) -and (Test-Path $editorSrc)) {
         $appDst = Join-Path $electronDst 'resources\app'
         New-Item -ItemType Directory -Force $appDst | Out-Null
-        foreach ($f in 'server.js', 'electron-main.js', 'package.json') {
+        foreach ($f in 'server.js', 'electron-main.js') {
             if (Test-Path (Join-Path $editorSrc $f)) { Copy-Item (Join-Path $editorSrc $f) $appDst -Force }
         }
         foreach ($d in 'public', 'node_modules') {
             if (Test-Path (Join-Path $editorSrc $d)) { Copy-Item (Join-Path $editorSrc $d) $appDst -Recurse -Force }
         }
+        # The runtime app must NOT contain the electron / electron-builder dev
+        # dependencies. A node_modules\electron shadows Electron's own built-in
+        # 'electron' module, so electron-main.js's require('electron') loads that
+        # broken dev package instead of the real API - the editor window never
+        # opens and the game silently shows the classic IMGUI editor instead.
+        # Strip them, and overwrite package.json with a slim, devDependency-free
+        # one (matching a proper electron-builder output) so it can't come back.
+        foreach ($dev in 'electron', 'electron-builder') {
+            Remove-Item (Join-Path $appDst "node_modules\$dev") -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        Write-Utf8NoBom (Join-Path $appDst 'package.json') @'
+{
+  "name": "igtap-editor",
+  "version": "1.0.0",
+  "description": "IGTAP Map Editor",
+  "main": "electron-main.js",
+  "dependencies": { "express": "^4.18.0" }
+}
+'@
         Ok "editor app -> MapEditor\electron\resources\app\"
-    } elseif (-not (Test-Path $electronExe)) {
+    }
+
+    # Verify the editor will actually launch; if not, say so loudly instead of
+    # letting the game quietly fall back to the IMGUI editor with no explanation.
+    if (Test-Path $electronExe) {
+        $appDst = Join-Path $electronDst 'resources\app'
+        $missing = @()
+        foreach ($need in 'electron-main.js', 'server.js', 'package.json', 'node_modules\express') {
+            if (-not (Test-Path (Join-Path $appDst $need))) { $missing += $need }
+        }
+        if (Test-Path (Join-Path $appDst 'node_modules\electron')) { $missing += '(stray node_modules\electron not removed)' }
+        if ($missing.Count) {
+            Write-Warning ("Electron editor looks incomplete - the game will fall back to the IMGUI editor. Missing: " + ($missing -join ', '))
+        }
+    } else {
         Write-Warning 'Electron editor could not be installed - the in-game editor will fall back to the classic IMGUI editor.'
     }
 }
