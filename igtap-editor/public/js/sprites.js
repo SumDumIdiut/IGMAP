@@ -99,9 +99,12 @@ export function categorizeGroup(name) {
   return 'other';
 }
 
-// Build a full Windows path from a filename (for saving into level JSON)
+// Build a full Windows path from a filename (for saving into level JSON).
+// state.spriteDir comes from the server manifest (the running user's sprite
+// dir), so no machine-specific path is baked in; if it's somehow unset, fall
+// back to the bare filename (the plugin resolves tile sprites by name anyway).
 export function buildGamePath(filename) {
   if (!filename) return '';
-  const dir = state.spriteDir || 'C:\\Users\\macro\\Downloads\\decompiled\\assets\\Sprite';
-  return dir + '\\' + filename;
+  const dir = state.spriteDir || '';
+  return dir ? dir + '\\' + filename : filename;
 }

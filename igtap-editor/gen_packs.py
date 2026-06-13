@@ -10,7 +10,11 @@ import json, os, re, sys
 from collections import defaultdict
 from PIL import Image
 
-SPRITE_DIR = r"C:\Users\macro\AppData\Roaming\IGTAPEditor\sprites"
+# Resolve against the current user's Roaming AppData (matches where the plugin
+# exports sprites and what server.js serves) - never a hardcoded user path.
+SPRITE_DIR = os.path.join(
+    os.environ.get("APPDATA", os.path.expanduser(r"~\AppData\Roaming")),
+    "IGTAPEditor", "sprites")
 OUT_PATH   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "packs.json")
 
 MIN_GROUP   = 6
